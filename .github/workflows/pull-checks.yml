@@ -1,0 +1,12 @@
+name: Pull Request Checks
+
+on:
+    pull_request:
+        types: [opened, edited]
+jobs:
+    golang-lint:
+        name: Golang Linting
+        runs-on: ubuntu-latest
+        steps:
+            - run: |
+                echo Linting Golang Application
