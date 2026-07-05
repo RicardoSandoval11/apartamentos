@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/RicardoSandoval11/apartamentos/backend/constants"
+	"github.com/RicardoSandoval11/apartamentos/backend/middleware"
 	"github.com/RicardoSandoval11/apartamentos/backend/pkg/apartment"
 
 	httptransport "github.com/go-kit/kit/transport/http"
@@ -82,11 +83,16 @@ func main() {
 	aptService := apartment.NewApartmentService()
 
 	aptEndpoint := apartment.MakeGetApartmentsEndpoint(aptService)
+	{
+		aptEndpoint = middleware.LoggingMiddleware()(aptEndpoint)
+		aptEndpoint = middleware.AuthMiddleware()(aptEndpoint)
+	}
 
 	aptHandler := httptransport.NewServer(
 		aptEndpoint,
 		apartment.DecodeGetApartmentRequest,
 		apartment.EncodeGetApartmentResponse,
+		httptransport.ServerBefore(middleware.ExtractTokenFromHeader),
 	)
 
 	mux := http.NewServeMux()
