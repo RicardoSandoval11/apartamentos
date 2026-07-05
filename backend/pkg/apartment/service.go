@@ -5,17 +5,20 @@ import (
 	"errors"
 
 	"github.com/RicardoSandoval11/apartamentos/backend/entities"
-	"github.com/google/uuid"
 )
 
 type Service interface {
 	GetApartment(ctx context.Context, publicId string) (*entities.Apartment, error)
 }
 
-type apartmentService struct{}
+type apartmentService struct {
+	repository Repository
+}
 
-func NewApartmentService() Service {
-	return &apartmentService{}
+func NewApartmentService(repository Repository) Service {
+	return &apartmentService{
+		repository: repository,
+	}
 }
 
 func (s *apartmentService) GetApartment(ctx context.Context, publicId string) (*entities.Apartment, error) {
@@ -23,10 +26,10 @@ func (s *apartmentService) GetApartment(ctx context.Context, publicId string) (*
 		return nil, errors.New("Invalid public id")
 	}
 
-	result := entities.Apartment{
-		Id:       1,
-		PublicId: uuid.New(),
-		Title:    "Apartamento Zona 12",
+	result, err := s.repository.GetById(ctx, publicId)
+
+	if err != nil {
+		return nil, err
 	}
 
 	return &result, nil

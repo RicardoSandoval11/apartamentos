@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/RicardoSandoval11/apartamentos/backend/constants"
+	"github.com/RicardoSandoval11/apartamentos/backend/db"
+	"github.com/RicardoSandoval11/apartamentos/backend/db/migrations"
 	"github.com/RicardoSandoval11/apartamentos/backend/middleware"
 	"github.com/RicardoSandoval11/apartamentos/backend/pkg/apartment"
 
@@ -79,15 +81,31 @@ func main() {
 		),
 	)
 
-	// GO KIT INTEGRATION
-	aptService := apartment.NewApartmentService()
+	// initialize database
+	dbInstance := db.GetDatabase()
 
+	// apply migrations
+	logger.Info("checking for pending migrations...")
+
+	if err := migrations.Run(dbInstance); err != nil {
+		logger.Error("failed applying mgirations", "error", err)
+		os.Exit(1)
+	}
+
+	// initialize repositories
+	aptRepository := apartment.NewPostgresqlRepository(dbInstance)
+
+	// initialize services
+	aptService := apartment.NewApartmentService(aptRepository)
+
+	// initialize endpoints
 	aptEndpoint := apartment.MakeGetApartmentsEndpoint(aptService)
 	{
 		aptEndpoint = middleware.LoggingMiddleware()(aptEndpoint)
 		aptEndpoint = middleware.AuthMiddleware()(aptEndpoint)
 	}
 
+	// initialize handlers
 	aptHandler := httptransport.NewServer(
 		aptEndpoint,
 		apartment.DecodeGetApartmentRequest,

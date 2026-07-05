@@ -16,6 +16,8 @@ require (
 require (
 	github.com/go-kit/log v0.2.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
+	github.com/golang-migrate/migrate/v4 v4.19.1 // indirect
+	github.com/lib/pq v1.10.9 // indirect
 )
 
 require (
