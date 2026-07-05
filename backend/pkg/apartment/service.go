@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/RicardoSandoval11/apartamentos/backend/entities"
+	"github.com/google/uuid"
 )
 
 type Service interface {
@@ -23,7 +24,11 @@ func NewApartmentService(repository Repository) Service {
 
 func (s *apartmentService) GetApartment(ctx context.Context, publicId string) (*entities.Apartment, error) {
 	if publicId == "" {
-		return nil, errors.New("Invalid public id")
+		return nil, errors.New("invalid public id")
+	}
+
+	if err := uuid.Validate(publicId); err != nil {
+		return nil, errors.New("invalid uuid")
 	}
 
 	result, err := s.repository.GetById(ctx, publicId)

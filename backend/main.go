@@ -57,7 +57,7 @@ func main() {
 
 	// 3. Configuracion de OpenTelemetry
 	exporter, _ := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure())
-	metricExporter, _ := otlpmetricgrpc.New(ctx)
+	metricExporter, _ := otlpmetricgrpc.New(ctx, otlpmetricgrpc.WithInsecure())
 	res, _ := resource.New(
 		ctx,
 		resource.WithAttributes(
