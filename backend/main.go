@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/RicardoSandoval11/apartamentos/backend/constants"
+	"github.com/RicardoSandoval11/apartamentos/backend/conf"
 	"github.com/RicardoSandoval11/apartamentos/backend/db"
 	"github.com/RicardoSandoval11/apartamentos/backend/db/migrations"
 	"github.com/RicardoSandoval11/apartamentos/backend/middleware"
@@ -38,12 +38,20 @@ func main() {
 
 	defer cancel()
 
+	// 1. Get env variables
+	cfg, err := conf.GetEnv()
+
+	if err != nil {
+		slog.Error("could not load environment variables", "error", err)
+		os.Exit(1)
+	}
+
 	// 2. Configuraciones de logging
 	logger := slog.New(
 		slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 			Level: slog.LevelInfo,
 		}),
-	).With("service", constants.SERVICE_NAME)
+	).With("service", cfg.ServiceName)
 
 	slog.SetDefault(logger)
 
@@ -53,9 +61,9 @@ func main() {
 	res, _ := resource.New(
 		ctx,
 		resource.WithAttributes(
-			semconv.ServiceName(constants.SERVICE_NAME),
-			semconv.ServiceVersion(constants.SERVICE_VERSION),
-			attribute.String("environment", constants.ENVIRONMENT),
+			semconv.ServiceName(cfg.ServiceName),
+			semconv.ServiceVersion(cfg.ServiceVersion),
+			attribute.String("environment", cfg.Environment),
 		),
 	)
 
@@ -82,7 +90,7 @@ func main() {
 	)
 
 	// initialize database
-	dbInstance := db.GetDatabase()
+	dbInstance := db.GetDatabase(cfg.DbConnectionString)
 
 	// apply migrations
 	logger.Info("checking for pending migrations...")
@@ -121,7 +129,7 @@ func main() {
 	errs := make(chan error)
 
 	srv := &http.Server{
-		Addr:    constants.APPLICATION_PORT,
+		Addr:    cfg.ApplicationPort,
 		Handler: handler,
 	}
 

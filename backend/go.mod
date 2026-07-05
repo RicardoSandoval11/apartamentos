@@ -14,6 +14,7 @@ require (
 )
 
 require (
+	github.com/caarlos0/env/v10 v10.0.0 // indirect
 	github.com/go-kit/log v0.2.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/golang-migrate/migrate/v4 v4.19.1 // indirect
@@ -21,6 +22,7 @@ require (
 )
 
 require (
+	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
