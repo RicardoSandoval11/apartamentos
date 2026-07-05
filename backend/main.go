@@ -9,8 +9,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/RicardoSandoval11/apartamentos/backend/constants"
+	"github.com/RicardoSandoval11/apartamentos/backend/conf"
+	"github.com/RicardoSandoval11/apartamentos/backend/db"
+	"github.com/RicardoSandoval11/apartamentos/backend/db/migrations"
+	"github.com/RicardoSandoval11/apartamentos/backend/middleware"
+	"github.com/RicardoSandoval11/apartamentos/backend/pkg/apartment"
 
+	httptransport "github.com/go-kit/kit/transport/http"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -23,17 +28,6 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 )
 
-/*
-	1. Cada microservicio debe tener un contexto a nivel de servicio que se pasa a los handlers por si se finaliza el pod
-	2. Configuraciones de logging
-	3. Configuracion de OpenTelemetry
-	4. Configuracion de metricas
-	5. Configuracion de los servicios
-	6. Configuracion de los handlers
-	7. Configuracion de una señal si algun agente externo termina el proceso
-	8. Configuracion de circuit breaker usando hystrix
-*/
-
 func main() {
 
 	ctx, cancel := signal.NotifyContext(
@@ -44,12 +38,20 @@ func main() {
 
 	defer cancel()
 
+	// 1. Get env variables
+	cfg, err := conf.GetEnv()
+
+	if err != nil {
+		slog.Error("could not load environment variables", "error", err)
+		os.Exit(1)
+	}
+
 	// 2. Configuraciones de logging
 	logger := slog.New(
 		slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 			Level: slog.LevelInfo,
 		}),
-	).With("service", constants.SERVICE_NAME)
+	).With("service", cfg.ServiceName)
 
 	slog.SetDefault(logger)
 
@@ -59,9 +61,9 @@ func main() {
 	res, _ := resource.New(
 		ctx,
 		resource.WithAttributes(
-			semconv.ServiceName(constants.SERVICE_NAME),
-			semconv.ServiceVersion(constants.SERVICE_VERSION),
-			attribute.String("environment", constants.ENVIRONMENT),
+			semconv.ServiceName(cfg.ServiceName),
+			semconv.ServiceVersion(cfg.ServiceVersion),
+			attribute.String("environment", cfg.Environment),
 		),
 	)
 
@@ -87,12 +89,47 @@ func main() {
 		),
 	)
 
-	handler := otelhttp.NewHandler(nil, "api-server")
+	// initialize database
+	dbInstance := db.GetDatabase(cfg.DbConnectionString)
+
+	// apply migrations
+	logger.Info("checking for pending migrations...")
+
+	if err := migrations.Run(dbInstance); err != nil {
+		logger.Error("failed applying mgirations", "error", err)
+		os.Exit(1)
+	}
+
+	// initialize repositories
+	aptRepository := apartment.NewPostgresqlRepository(dbInstance)
+
+	// initialize services
+	aptService := apartment.NewApartmentService(aptRepository)
+
+	// initialize endpoints
+	aptEndpoint := apartment.MakeGetApartmentsEndpoint(aptService)
+	{
+		aptEndpoint = middleware.LoggingMiddleware()(aptEndpoint)
+		aptEndpoint = middleware.AuthMiddleware()(aptEndpoint)
+	}
+
+	// initialize handlers
+	aptHandler := httptransport.NewServer(
+		aptEndpoint,
+		apartment.DecodeGetApartmentRequest,
+		apartment.EncodeGetApartmentResponse,
+		httptransport.ServerBefore(middleware.ExtractTokenFromHeader),
+	)
+
+	mux := http.NewServeMux()
+	mux.Handle("/apartment", aptHandler)
+
+	handler := otelhttp.NewHandler(mux, "api-server")
 
 	errs := make(chan error)
 
 	srv := &http.Server{
-		Addr:    constants.APPLICATION_PORT,
+		Addr:    cfg.ApplicationPort,
 		Handler: handler,
 	}
 

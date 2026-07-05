@@ -1,15 +1,14 @@
-package infrastructure
+package db
 
 import (
 	"time"
 
-	"github.com/RicardoSandoval11/apartamentos/backend/constants"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func GetDatabase() *gorm.DB {
-	db, err := gorm.Open(postgres.Open(constants.DATABASE_CONN_STRING), &gorm.Config{})
+func GetDatabase(dbString string) *gorm.DB {
+	db, err := gorm.Open(postgres.Open(dbString), &gorm.Config{})
 
 	if err != nil {
 		panic("Could not connect to the database")
