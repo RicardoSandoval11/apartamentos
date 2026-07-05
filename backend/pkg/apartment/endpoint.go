@@ -14,7 +14,6 @@ type GetApartmentRequest struct {
 type GetApartmentResponse struct {
 	Data    *entities.Apartment `json:"data"`
 	Success bool                `json:"success"`
-	Errors  []string            `json:"errors,omitempty"`
 }
 
 func MakeGetApartmentsEndpoint(svc Service) endpoint.Endpoint {
@@ -25,14 +24,12 @@ func MakeGetApartmentsEndpoint(svc Service) endpoint.Endpoint {
 			return GetApartmentResponse{
 				Data:    nil,
 				Success: false,
-				Errors:  []string{err.Error()},
 			}, err
 		}
 
 		return GetApartmentResponse{
 			Data:    apt,
 			Success: true,
-			Errors:  []string{},
 		}, nil
 	}
 }

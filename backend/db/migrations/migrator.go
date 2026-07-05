@@ -12,6 +12,8 @@ import (
 )
 
 // This loads the .sql files in memory of the exe file
+//
+//go:embed *.sql
 var migrationFiles embed.FS
 
 func Run(db *gorm.DB) error {
