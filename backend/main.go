@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/RicardoSandoval11/apartamentos/backend/constants"
+	"github.com/RicardoSandoval11/apartamentos/backend/pkg/apartment"
 
+	httptransport "github.com/go-kit/kit/transport/http"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -22,17 +24,6 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 )
-
-/*
-	1. Cada microservicio debe tener un contexto a nivel de servicio que se pasa a los handlers por si se finaliza el pod
-	2. Configuraciones de logging
-	3. Configuracion de OpenTelemetry
-	4. Configuracion de metricas
-	5. Configuracion de los servicios
-	6. Configuracion de los handlers
-	7. Configuracion de una señal si algun agente externo termina el proceso
-	8. Configuracion de circuit breaker usando hystrix
-*/
 
 func main() {
 
@@ -87,7 +78,21 @@ func main() {
 		),
 	)
 
-	handler := otelhttp.NewHandler(nil, "api-server")
+	// GO KIT INTEGRATION
+	aptService := apartment.NewApartmentService()
+
+	aptEndpoint := apartment.MakeGetApartmentsEndpoint(aptService)
+
+	aptHandler := httptransport.NewServer(
+		aptEndpoint,
+		apartment.DecodeGetApartmentRequest,
+		apartment.EncodeGetApartmentResponse,
+	)
+
+	mux := http.NewServeMux()
+	mux.Handle("/apartment", aptHandler)
+
+	handler := otelhttp.NewHandler(mux, "api-server")
 
 	errs := make(chan error)
 
