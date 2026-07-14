@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/RicardoSandoval11/apartamentos/backend/entities"
+	"github.com/RicardoSandoval11/apartamentos/apartments-service/entities"
 	"gorm.io/gorm"
 )
 

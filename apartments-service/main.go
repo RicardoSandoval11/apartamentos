@@ -9,11 +9,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/RicardoSandoval11/apartamentos/backend/conf"
-	"github.com/RicardoSandoval11/apartamentos/backend/db"
-	"github.com/RicardoSandoval11/apartamentos/backend/db/migrations"
-	"github.com/RicardoSandoval11/apartamentos/backend/middleware"
-	"github.com/RicardoSandoval11/apartamentos/backend/pkg/apartment"
+	"github.com/RicardoSandoval11/apartamentos/apartments-service/conf"
+	"github.com/RicardoSandoval11/apartamentos/apartments-service/db"
+	"github.com/RicardoSandoval11/apartamentos/apartments-service/db/migrations"
+	"github.com/RicardoSandoval11/apartamentos/apartments-service/middleware"
+	"github.com/RicardoSandoval11/apartamentos/apartments-service/pkg/apartment"
 
 	httptransport "github.com/go-kit/kit/transport/http"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
