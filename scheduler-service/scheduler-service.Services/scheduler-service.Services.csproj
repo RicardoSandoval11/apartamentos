@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\scheduler-service.DataAccess\scheduler-service.DataAccess.csproj" />
+    <ProjectReference Include="..\scheduler-service.Interfaces\scheduler-service.Interfaces.csproj" />
+    <ProjectReference Include="..\scheduler-service.Models\scheduler-service.Models.csproj" />
+    <ProjectReference Include="..\scheduler-service.Repositories\scheduler-service.Repositories.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>scheduler_service.Services</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
