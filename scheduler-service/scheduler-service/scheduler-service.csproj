@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>scheduler_service</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\scheduler-service.Interfaces\scheduler-service.Interfaces.csproj" />
+    <ProjectReference Include="..\scheduler-service.Models\scheduler-service.Models.csproj" />
+    <ProjectReference Include="..\scheduler-service.Repositories\scheduler-service.Repositories.csproj" />
+    <ProjectReference Include="..\scheduler-service.Services\scheduler-service.Services.csproj" />
+  </ItemGroup>
+
+</Project>

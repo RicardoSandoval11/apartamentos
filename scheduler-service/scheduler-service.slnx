@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="scheduler-service.DataAccess/scheduler-service.DataAccess.csproj" />
+  <Project Path="scheduler-service.Interfaces/scheduler-service.Interfaces.csproj" />
+  <Project Path="scheduler-service.Models/scheduler-service.Models.csproj" />
+  <Project Path="scheduler-service.Repositories/scheduler-service.Repositories.csproj" />
+  <Project Path="scheduler-service.Services/scheduler-service.Services.csproj" />
+  <Project Path="scheduler-service/scheduler-service.csproj" />
+</Solution>
