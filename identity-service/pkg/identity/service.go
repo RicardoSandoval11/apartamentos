@@ -75,31 +75,29 @@ type identityService struct {
 }
 
 func NewIdentityService(
-		identityRepository Repository, 
-		verificationRepository verification.Repository,
-		config &conf.Config // SEGUIR AQUI
-	) Service {
+	identityRepository Repository,
+	verificationRepository verification.Repository,
+	config *conf.Config,
+) Service {
 	return &identityService{
 		identityRepository:     identityRepository,
 		verificationRepository: verificationRepository,
+		config:                 config,
 	}
 }
 
 func (s *identityService) Register(ctx context.Context, input RegisterInput) (*RegisterOutput, error) {
 
-	// 1. Validar si el correo ya existe
 	identity, err := s.identityRepository.GetByEmail(ctx, input.Email)
 
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. Si el correo ya existe, retornar error
 	if identity != nil {
 		return nil, ErrEmailInUse
 	}
 
-	// 3. Si el correo no existe, crear registro
 	newUser := entities.Identity{
 		Email:        input.Email,
 		PasswordHash: utils.GenerateHash(input.Password),
@@ -111,17 +109,14 @@ func (s *identityService) Register(ctx context.Context, input RegisterInput) (*R
 		return nil, err
 	}
 
-	// 4. Generate and save verification code
 	code, err := s.verificationRepository.SaveVerification(ctx, *identityId)
 
 	if err != nil {
 		return nil, err
 	}
 
-	// 5. Enviar correo de verificacion de cuenta
 	fmt.Printf("Sending verification code: %s\n", code)
 
-	// 6. Retornar respuesta de exito
 	result := RegisterOutput{
 		Success: true,
 	}
@@ -197,6 +192,8 @@ func (s *identityService) Login(ctx context.Context, input LoginInput) (*LoginOu
 	}
 
 	jwtParser = jwt.New(jwt.GetSigningMethod("RS256"))
+
+	// SEGUIR AQUI
 }
 
 func (s *identityService) RefreshToken(ctx context.Context, input RefreshTokenInput) (*RefreshTokenOutput, error) {

@@ -1,1 +1,23 @@
+.env
 .env.*
+
+# .NET build output
+[Bb]in/
+[Oo]bj/
+.vs/
+TestResults/
+*.user
+*.suo
+
+# Go test output
+*.test
+coverage.out
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
