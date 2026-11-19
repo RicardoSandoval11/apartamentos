@@ -12,13 +12,15 @@ import (
 const defaultEnv = "LOCAL"
 
 type Config struct {
-	ServiceName         string `env:"SERVICE_NAME" envDefault:"local"`
-	ServiceVersion      string `env:"SERVICE_VERSION,required"`
-	ApplicationPort     string `env:"APPLICATION_PORT" envDefault:":8080"`
-	Environment         string `env:"ENVIRONMENT" envDefault:"LOCAL"`
-	DbConnectionString  string `env:"DATABASE_CONN_STRING,required"`
-	PrivateKeyAuthToken string `env:"PRIVATE_KEY_AUTH_TOKEN,required"`
-	PublicKeyAuthToken  string `env:"PUBLIC_KEY_AUTH_TOKEN,required"`
+	ServiceName                 string `env:"SERVICE_NAME" envDefault:"local"`
+	ServiceVersion              string `env:"SERVICE_VERSION,required"`
+	ApplicationPort             string `env:"APPLICATION_PORT" envDefault:":8080"`
+	Environment                 string `env:"ENVIRONMENT" envDefault:"LOCAL"`
+	DbConnectionString          string `env:"DATABASE_CONN_STRING,required"`
+	PrivateKeyAuthToken         string `env:"PRIVATE_KEY_AUTH_TOKEN,required"`
+	PublicKeyAuthToken          string `env:"PUBLIC_KEY_AUTH_TOKEN,required"`
+	AuthTokenDurationMinutes    int    `env:"AUTH_TOKEN_DURATION_MINUTES,required"`
+	RefreshTokenDurationMinutes int    `env:"REFRESH_TOKEN_DURATION_MINUTES,required"`
 }
 
 func getEnvironment() string {

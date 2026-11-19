@@ -3,6 +3,7 @@ package entities
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -16,6 +17,7 @@ const (
 
 type Identity struct {
 	Id           uint64     `gorm:"column:id;primaryKey;autoIncremental"`
+	PublicId     uuid.UUID  `gorm:"column:public_id;not null;unique;index:idx_public_id"`
 	Email        string     `gorm:"column:email;size:75;not null;unique;index:idx_email"`
 	PasswordHash string     `gorm:"column:password_hash;size:250;not null"`
 	Status       int        `gorm:"column:status;not null"`

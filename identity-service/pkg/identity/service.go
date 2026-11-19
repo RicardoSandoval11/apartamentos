@@ -2,6 +2,7 @@ package identity
 
 import (
 	"context"
+	"crypto/rsa"
 	"errors"
 	"fmt"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/RicardoSandoval11/apartamentos/identity-service/pkg/verification"
 	"github.com/RicardoSandoval11/apartamentos/identity-service/utils"
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 )
 
 // Custom errors
@@ -20,8 +22,20 @@ var ErrFailedAttemptsExceed = errors.New("number of attempts exceeded")
 var ErrInvalidVerificationCode = errors.New("invalid verification code")
 var ErrIdentityBlocked = errors.New("identity blocked")
 var ErrIdentityNotVerified = errors.New("identity is not verified")
+var ErrInvalidCredentials = errors.New("invalid credentials")
 
 const maxNumberOfAttempts = 5
+
+// Service types
+type CustomTokenClaims struct {
+	Uid   uuid.UUID
+	Email string
+}
+
+type AccessTokenClaims struct {
+	jwt.StandardClaims
+	CustomTokenClaims
+}
 
 // Services inputs
 type RegisterInput struct {
@@ -48,8 +62,8 @@ type LoginInput struct {
 }
 
 type LoginOutput struct {
-	Token        *string
-	RefreshToken *string
+	Token        string
+	RefreshToken string
 }
 
 type RefreshTokenInput struct {
@@ -71,7 +85,10 @@ type Service interface {
 type identityService struct {
 	identityRepository     Repository
 	verificationRepository verification.Repository
-	config                 *conf.Config
+	signKey                *rsa.PrivateKey
+	verifyKey              *rsa.PublicKey
+	authTokenDuration      time.Duration
+	refreshTokenDuration   time.Duration
 }
 
 func NewIdentityService(
@@ -79,10 +96,29 @@ func NewIdentityService(
 	verificationRepository verification.Repository,
 	config *conf.Config,
 ) Service {
+
+	privateKeyBytes := []byte(config.PrivateKeyAuthToken)
+	publicKeyBytes := []byte(config.PublicKeyAuthToken)
+
+	signKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyBytes)
+
+	if err != nil {
+		panic("invalid private key")
+	}
+
+	verifyKey, err := jwt.ParseRSAPublicKeyFromPEM(publicKeyBytes)
+
+	if err != nil {
+		panic("invalid public key")
+	}
+
 	return &identityService{
 		identityRepository:     identityRepository,
 		verificationRepository: verificationRepository,
-		config:                 config,
+		signKey:                signKey,
+		verifyKey:              verifyKey,
+		authTokenDuration:      time.Duration(config.AuthTokenDurationMinutes * int(time.Minute)),
+		refreshTokenDuration:   time.Duration(config.RefreshTokenDurationMinutes * int(time.Minute)),
 	}
 }
 
@@ -101,6 +137,7 @@ func (s *identityService) Register(ctx context.Context, input RegisterInput) (*R
 	newUser := entities.Identity{
 		Email:        input.Email,
 		PasswordHash: utils.GenerateHash(input.Password),
+		PublicId:     uuid.New(),
 	}
 
 	identityId, err := s.identityRepository.Create(ctx, newUser)
@@ -176,7 +213,7 @@ func (s *identityService) VerifyAccount(ctx context.Context, input VerifyAccount
 }
 
 func (s *identityService) Login(ctx context.Context, input LoginInput) (*LoginOutput, error) {
-	// 1. Verificar si la cuenta esta verificada o bloqueada
+
 	identity, err := s.identityRepository.GetByEmail(ctx, input.Email)
 
 	if err != nil {
@@ -191,11 +228,80 @@ func (s *identityService) Login(ctx context.Context, input LoginInput) (*LoginOu
 		return nil, ErrIdentityNotVerified
 	}
 
-	jwtParser = jwt.New(jwt.GetSigningMethod("RS256"))
+	receivedPassword := utils.GenerateHash(input.Password)
 
-	// SEGUIR AQUI
+	if receivedPassword != identity.PasswordHash {
+		// TODO: Control number of failed attempts or block account
+		return nil, ErrInvalidCredentials
+	}
+
+	authToken, err := s.generateAuthToken(identity.PublicId, identity.Email)
+
+	if err != nil {
+		return nil, err
+	}
+
+	refreshToken, err := s.generateRefreshToken(identity.PublicId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &LoginOutput{
+		Token:        authToken,
+		RefreshToken: refreshToken,
+	}, nil
 }
 
 func (s *identityService) RefreshToken(ctx context.Context, input RefreshTokenInput) (*RefreshTokenOutput, error) {
+	// 1. Decodificar refresh token
 
+	// 2. Obtener identity de la base de datos
+	identityId, err := s.identityRepository.GetByPublicId()
+
+	// 3. Validar si la cuenta esta bloqueada
+
+	// 4. Validar si la cuenta esta verificada
+
+}
+
+func (s *identityService) generateAuthToken(publicId uuid.UUID, email string) (string, error) {
+	jwtParser := jwt.New(jwt.GetSigningMethod("RS256"))
+
+	expiresAt := time.Now().Add(s.authTokenDuration)
+
+	jwtParser.Claims = &AccessTokenClaims{
+		jwt.StandardClaims{
+			ExpiresAt: expiresAt.Unix(),
+			IssuedAt:  time.Now().Unix(),
+		},
+		CustomTokenClaims{
+			Uid:   publicId,
+			Email: email,
+		},
+	}
+
+	jwtParser.SignedString(s.signKey)
+
+	return jwtParser.SignedString(s.signKey)
+}
+
+func (s *identityService) generateRefreshToken(publicId uuid.UUID) (string, error) {
+	jwtParser := jwt.New(jwt.GetSigningMethod("RS256"))
+
+	expiresAt := time.Now().Add(s.refreshTokenDuration)
+
+	jwtParser.Claims = &AccessTokenClaims{
+		jwt.StandardClaims{
+			ExpiresAt: expiresAt.Unix(),
+			IssuedAt:  time.Now().Unix(),
+		},
+		CustomTokenClaims{
+			Uid: publicId,
+		},
+	}
+
+	jwtParser.SignedString(s.signKey)
+
+	return jwtParser.SignedString(s.signKey)
 }

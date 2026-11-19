@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/RicardoSandoval11/apartamentos/identity-service/entities"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -51,4 +52,16 @@ func (r *postgresqlRepository) Update(ctx context.Context, key string, identity 
 	}
 
 	return true, nil
+}
+
+func (r *postgresqlRepository) GetByPublicId(ctx context.Context, publicId uuid.UUID) (*entities.Identity, error) {
+	var identity entities.Identity
+
+	result := r.db.WithContext(ctx).Where("public_id = ?", publicId).First(&identity)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &identity, nil
 }
