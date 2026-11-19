@@ -8,6 +8,7 @@ public class ApplicationContext(DbContextOptions<ApplicationContext> options) : 
     {
         modelBuilder.ApplyConfiguration(new ReservationConfiguration());
         modelBuilder.ApplyConfiguration(new TimeslotConfiguration());
+        modelBuilder.ApplyConfiguration(new ReservingConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 }

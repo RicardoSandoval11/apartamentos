@@ -16,4 +16,8 @@ public class Reservation
     public virtual Timeslot Timeslot { get; set; } = null!;
 
     public ReservationStatus ReservationStatus { get; set; }
+
+    public long ReservingId { get; set; }
+
+    public virtual Reserving Reserving { get; set; } = null!;
 }

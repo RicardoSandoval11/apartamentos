@@ -24,8 +24,16 @@ public class ReservationConfiguration : IEntityTypeConfiguration<Reservation>
         .HasColumnName("reservation_status")
         .IsRequired();
 
+        builder.Property(e => e.ReservingId)
+        .HasColumnName("reserving_id")
+        .IsRequired();
+
         builder.HasOne(e => e.Timeslot)
         .WithMany(e => e.Reservations)
         .HasForeignKey(e => e.TimeslotId);
+
+        builder.HasOne(e => e.Reserving)
+        .WithOne(e => e.Reservation)
+        .HasForeignKey<Reservation>(e => e.ReservingId);
     }
 }
